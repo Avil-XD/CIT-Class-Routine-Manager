@@ -21,6 +21,11 @@ interface RoutineSlotFormProps {
   availableSubjects: Subject[];
 }
 
+interface ConflictInfo {
+  roomConflicts: Map<string, RoutineSlot>;
+  teacherConflicts: Map<string, RoutineSlot>;
+}
+
 export default function RoutineSlotForm({
   initialData,
   onSubmit,
@@ -49,8 +54,10 @@ export default function RoutineSlotForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableRooms, setAvailableRooms] = useState<Room[]>([]);
   const [availableTeachers, setAvailableTeachers] = useState<Teacher[]>([]);
-  const [occupiedRooms, setOccupiedRooms] = useState<Set<string>>(new Set());
-  const [occupiedTeachers, setOccupiedTeachers] = useState<Set<string>>(new Set());
+  const [conflicts, setConflicts] = useState<ConflictInfo>({
+    roomConflicts: new Map(),
+    teacherConflicts: new Map()
+  });
 
   // Update available rooms and teachers when department changes
   useEffect(() => {
@@ -65,37 +72,38 @@ export default function RoutineSlotForm({
     const updateConflicts = async () => {
       if (formData.day && formData.startTime) {
         try {
-          const conflicts = await findConflictingSlots(formData.day, formData.startTime);
-          const roomsInUse = new Set(conflicts.map(slot => slot.roomNo));
-          const teachersInUse = new Set(conflicts.map(slot => slot.teacherId));
+          const conflictingSlots = await findConflictingSlots(formData.day, formData.startTime);
+          const roomConflicts = new Map<string, RoutineSlot>();
+          const teacherConflicts = new Map<string, RoutineSlot>();
 
-          // Remove current slot from conflicts if editing
-          if (initialData?.id) {
-            const currentSlot = conflicts.find(slot => slot.id === initialData.id);
-            if (currentSlot) {
-              roomsInUse.delete(currentSlot.roomNo);
-              teachersInUse.delete(currentSlot.teacherId);
+          conflictingSlots.forEach(slot => {
+            if (slot.id !== initialData?.id) {
+              if (slot.roomNo) roomConflicts.set(slot.roomNo, slot);
+              if (slot.teacherId) teacherConflicts.set(slot.teacherId, slot);
             }
-          }
+          });
 
-          setOccupiedRooms(roomsInUse);
-          setOccupiedTeachers(teachersInUse);
+          setConflicts({ roomConflicts, teacherConflicts });
 
-          // Clear selections if they're no longer available
-          if (formData.roomNo && roomsInUse.has(formData.roomNo)) {
+          // Clear selections if they're now conflicting
+          if (formData.roomNo && roomConflicts.has(formData.roomNo)) {
             setFormData(prev => ({ ...prev, roomNo: '' }));
           }
-          if (formData.teacherId && teachersInUse.has(formData.teacherId)) {
+          if (formData.teacherId && teacherConflicts.has(formData.teacherId)) {
             setFormData(prev => ({ ...prev, teacherId: '' }));
           }
         } catch (error) {
           console.error('Error checking conflicts:', error);
-          setOccupiedRooms(new Set());
-          setOccupiedTeachers(new Set());
+          setConflicts({
+            roomConflicts: new Map(),
+            teacherConflicts: new Map()
+          });
         }
       } else {
-        setOccupiedRooms(new Set());
-        setOccupiedTeachers(new Set());
+        setConflicts({
+          roomConflicts: new Map(),
+          teacherConflicts: new Map()
+        });
       }
     };
     
@@ -221,18 +229,21 @@ export default function RoutineSlotForm({
           >
             <option value="">Select Room</option>
             {availableRooms.map(room => {
-              const isOccupied = occupiedRooms.has(room.number);
-              if (!isOccupied) {
-                return (
-                  <option key={room.number} value={room.number}>
-                    {room.name || room.number}
-                    {room.type === 'lab' ? ' (Lab)' :
-                     room.type === 'seminar' ? ' (Seminar Hall)' :
-                     room.type === 'gallery' ? ' (Gallery)' : ''}
-                  </option>
-                );
-              }
-              return null;
+              const conflictSlot = conflicts.roomConflicts.get(room.number);
+              return (
+                <option 
+                  key={room.number} 
+                  value={room.number}
+                  disabled={Boolean(conflictSlot)}
+                  className={conflictSlot ? 'text-red-400' : undefined}
+                >
+                  {room.name || room.number}
+                  {room.type === 'lab' ? ' (Lab)' :
+                   room.type === 'seminar' ? ' (Seminar Hall)' :
+                   room.type === 'gallery' ? ' (Gallery)' : ''}
+                  {conflictSlot && ` (In use by ${conflictSlot.department} Sem ${conflictSlot.semester})`}
+                </option>
+              );
             })}
           </select>
         </div>
@@ -248,15 +259,18 @@ export default function RoutineSlotForm({
           >
             <option value="">Select Teacher</option>
             {availableTeachers.map(teacher => {
-              const isOccupied = occupiedTeachers.has(teacher.id);
-              if (!isOccupied) {
-                return (
-                  <option key={teacher.id} value={teacher.id}>
-                    {teacher.id} ({teacher.name})
-                  </option>
-                );
-              }
-              return null;
+              const conflictSlot = conflicts.teacherConflicts.get(teacher.id);
+              return (
+                <option 
+                  key={teacher.id} 
+                  value={teacher.id}
+                  disabled={Boolean(conflictSlot)}
+                  className={conflictSlot ? 'text-red-400' : undefined}
+                >
+                  {teacher.id} ({teacher.name})
+                  {conflictSlot && ` (Teaching ${conflictSlot.department} Sem ${conflictSlot.semester})`}
+                </option>
+              );
             })}
           </select>
         </div>
