@@ -1,71 +1,86 @@
 # CIT Class Routine Manager
 
-A modern web application for managing class routines at Central Institute of Technology (CIT), Kokrajhar.
+A modern web application for managing class routines and timetables at CIT. Built with Next.js, TypeScript, and Tailwind CSS.
 
 ## Features
 
-- Interactive class routine management
-- Support for all departments (CSE, ECE, CE, IE, IT)
-- Automatic conflict detection for:
-  - Room allocations
-  - Teacher schedules
-- Real-time availability checking
-- PDF export functionality
-- Shared resource management across departments
+- 📅 Interactive class routine management
+- 🎓 Teacher and subject management
+- 🏢 Room allocation system
+- 📊 Multiple view options
+- 📱 Responsive design
+- 📄 PDF export functionality
 
-## Technology Stack
+## Tech Stack
 
-- Next.js 14
-- TypeScript
-- Tailwind CSS
-- Local Storage for data persistence
+- **Framework:** Next.js 14
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS
+- **PDF Generation:** jsPDF
+- **State Management:** React Hooks
+- **Development Tools:** ESLint, TypeScript
 
-## Usage
+## Getting Started
 
-### For Development
-
+1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/CIT-Class-Routine-Manager.git
-cd CIT-Class-Routine-Manager
+git clone https://github.com/yourusername/cit-class-routine-manager.git
+cd cit-class-routine-manager
+```
+
+2. **Install dependencies**
+```bash
 npm install
+```
+
+3. **Start development server**
+```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. **Open browser**
+Visit `http://localhost:3000`
 
-### For Production
+## Project Structure
 
-```bash
-npm run build
-npm start
+```
+app/
+├── components/     # UI Components
+├── constants/     # Application constants
+├── types/        # TypeScript types
+└── utils/        # Utility functions
 ```
 
-## Key Features
+## Configuration
 
-1. **Department Management**
-   - CSE, ECE, CE, IE, IT departments supported
-   - Semester-wise subject allocation
-   - Shared resource management
-
-2. **Time Slot Management**
-   - 8 slots per day (8:30 AM to 5:30 PM)
-   - Lunch break handling
-   - Clear slot visualization
-
-3. **Resource Management**
-   - Room availability tracking
-   - Teacher schedule management
-   - Cross-department conflict prevention
-
-4. **User Interface**
-   - Intuitive drag-and-drop interface
-   - Real-time conflict detection
-   - Clear availability indicators
+- `next.config.ts` - Next.js configuration
+- `tailwind.config.js` - Tailwind CSS configuration
+- `tsconfig.json` - TypeScript configuration
 
 ## Contributing
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on contributing to this project.
 
 ## License
 
-[MIT](https://choosealicense.com/licenses/mit/)
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Performance Optimizations
+
+- Server-side rendering with Next.js
+- Optimized image loading
+- Efficient state management
+- TypeScript for type safety
+- Tailwind CSS for minimal CSS bundle
+
+## Roadmap
+
+- [ ] Add drag-and-drop interface
+- [ ] Implement conflict detection
+- [ ] Add calendar integration
+- [ ] Enable data export in multiple formats
+- [ ] Add collaborative editing features
+
+## Support
+
+For support, please open an issue in the GitHub repository.
