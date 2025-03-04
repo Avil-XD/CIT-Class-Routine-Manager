@@ -51,7 +51,7 @@ export const DEPARTMENT_ROOMS: Record<string, DepartmentRooms> = {
 export const SHARED_LOCATIONS: Room[] = [
   { number: 'PG Room', type: 'classroom' },
   { number: 'Seminar Hall', type: 'seminar' },
-  { number: 'G1-306', name: 'Gallery 1-306', type: 'gallery' },
+  { number: 'G1', name: 'Gallery 1', type: 'gallery' },
   { number: 'G2', name: 'Gallery 2', type: 'gallery' },
   { number: 'G3', name: 'Gallery 3', type: 'gallery' }
 ];

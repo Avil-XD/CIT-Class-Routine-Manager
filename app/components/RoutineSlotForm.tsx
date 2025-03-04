@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { RoutineSlot, Subject, Room, Teacher } from '../types';
 import { validateSlot } from '../utils/validation';
 import { timeSlots, weekDays } from '../constants/timeSlots';
@@ -50,6 +50,7 @@ export default function RoutineSlotForm({
     }
   );
 
+  const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableRooms, setAvailableRooms] = useState<Room[]>([]);
@@ -58,6 +59,37 @@ export default function RoutineSlotForm({
     roomConflicts: new Map(),
     teacherConflicts: new Map()
   });
+
+  // Group subjects by semester
+  const groupedSubjects = useMemo(() => {
+    return availableSubjects.reduce((acc, subject) => {
+      if (!acc[subject.semester]) {
+        acc[subject.semester] = [];
+      }
+      acc[subject.semester].push(subject);
+      return acc;
+    }, {} as Record<number, Subject[]>);
+  }, [availableSubjects]);
+
+  // Filter subjects based on search query
+  const filteredSubjects = useMemo(() => {
+    if (!searchQuery) return groupedSubjects;
+    
+    const query = searchQuery.toLowerCase();
+    const filtered: Record<number, Subject[]> = {};
+    
+    Object.entries(groupedSubjects).forEach(([semester, subjects]) => {
+      const matchedSubjects = subjects.filter(subject =>
+        subject.code.toLowerCase().includes(query) ||
+        subject.name.toLowerCase().includes(query)
+      );
+      if (matchedSubjects.length > 0) {
+        filtered[Number(semester)] = matchedSubjects;
+      }
+    });
+    
+    return filtered;
+  }, [groupedSubjects, searchQuery]);
 
   // Update available rooms and teachers when department changes
   useEffect(() => {
@@ -196,6 +228,17 @@ export default function RoutineSlotForm({
         </div>
 
         <div className="col-span-2">
+          <label className={labelClassName}>Subject Search</label>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by code or name..."
+            className={inputClassName}
+          />
+        </div>
+
+        <div className="col-span-2">
           <label className={labelClassName}>Subject</label>
           <select
             value={formData.subjectId}
@@ -204,14 +247,19 @@ export default function RoutineSlotForm({
             required
           >
             <option value="">Select Subject</option>
-            {availableSubjects.map(subject => (
-              <option 
-                key={subject.code} 
-                value={subject.code}
-                
-              >
-                {subject.code} - {subject.name}
-              </option>
+            {Object.entries(filteredSubjects).map(([semester, subjects]) => (
+              <optgroup key={semester} label={`Semester ${semester}`}>
+                {subjects.map(subject => (
+                  <option 
+                    key={subject.code} 
+                    value={subject.code}
+                    className={`${subject.type === 'lab' ? 'text-green-300' : subject.type === 'project' ? 'text-yellow-300' : ''}`}
+                  >
+                    {subject.code} - {subject.name}
+                    {subject.type === 'lab' ? ' (Lab)' : subject.type === 'project' ? ' (Project)' : ''}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </div>

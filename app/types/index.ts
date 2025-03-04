@@ -1,8 +1,9 @@
 export interface Subject {
   code: string;
   name: string;
-  isCompulsory?: boolean;
-  elective?: string;
+  type: 'theory' | 'lab' | 'project';
+  semester: number;
+  credits: number;
 }
 
 export interface Room {

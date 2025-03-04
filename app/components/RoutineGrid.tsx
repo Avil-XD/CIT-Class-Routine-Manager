@@ -1,6 +1,6 @@
 'use client';
 
-import { RoutineSlot, TimeSlot } from '../types';
+import { RoutineSlot, TimeSlot, Subject } from '../types';
 import { getSubjectName } from '../constants/subjects';
 import { timeSlots, weekDays } from '../constants/timeSlots';
 
@@ -10,14 +10,23 @@ interface RoutineGridProps {
   onDeleteSlot?: (slot: RoutineSlot) => void;
 }
 
-const isLabSubject = (subjectId: string): boolean => {
+const getSubjectType = (code: string): 'theory' | 'lab' | 'project' => {
   // Check if the subject code ends with numbers 71-79 (lab subjects)
-  const match = subjectId.match(/\d+$/);
-  if (match) {
-    const number = parseInt(match[0]);
-    return number >= 71 && number <= 79;
+  const isLab = /\d{2}7\d$/.test(code);
+  // Check if the code contains 9 (usually projects/viva)
+  const isProject = /9[0-9]$/.test(code);
+  return isProject ? 'project' : isLab ? 'lab' : 'theory';
+};
+
+const getSlotColor = (type: 'theory' | 'lab' | 'project') => {
+  switch (type) {
+    case 'lab':
+      return 'bg-green-900/30';
+    case 'project':
+      return 'bg-yellow-900/30';
+    default:
+      return 'bg-blue-900/30';
   }
-  return false;
 };
 
 export default function RoutineGrid({ slots, onSlotClick, onDeleteSlot }: RoutineGridProps) {
@@ -50,16 +59,12 @@ export default function RoutineGrid({ slots, onSlotClick, onDeleteSlot }: Routin
               </td>
               {weekDays.map(day => {
                 const slot = getSlotForTimeAndDay(timeSlot, day);
-                const isLab = slot ? isLabSubject(slot.subjectId) : false;
+                const subjectType = slot ? getSubjectType(slot.subjectId) : null;
                 return (
                   <td
                     key={`${day}-${timeSlot.start}`}
                     className={`border border-gray-700 p-2 ${
-                      slot 
-                        ? isLab 
-                          ? 'bg-green-900/30' 
-                          : 'bg-blue-900/30'
-                        : 'bg-gray-800'
+                      slot ? getSlotColor(subjectType!) : 'bg-gray-800'
                     }`}
                   >
                     {slot && (
@@ -76,6 +81,9 @@ export default function RoutineGrid({ slots, onSlotClick, onDeleteSlot }: Routin
                           </div>
                           <div className="text-gray-300 text-xs">
                             Teacher: {slot.teacherId}
+                          </div>
+                          <div className="text-gray-300 text-xs italic">
+                            {subjectType === 'lab' ? '(Lab)' : subjectType === 'project' ? '(Project)' : ''}
                           </div>
                         </div>
                         {onDeleteSlot && (
