@@ -1,9 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RoutineSlot } from '../types';
-import { Subject } from '../types';
+import { RoutineSlot, Subject, Room, Teacher, TimeSlot } from '../types';
 import { validateSlot } from '../utils/validation';
+import { timeSlots, weekDays } from '../constants/timeSlots';
+import { getRoomsForDepartment } from '../constants/rooms';
+import { getTeachersForDepartment } from '../constants/teachers';
+import { findConflictingSlots } from '../utils/storage';
+
+interface FormData extends Partial<RoutineSlot> {
+  startTime: string;
+  endTime: string;
+}
 
 interface RoutineSlotFormProps {
   initialData?: Partial<RoutineSlot>;
@@ -20,8 +28,12 @@ export default function RoutineSlotForm({
   existingSlots,
   availableSubjects
 }: RoutineSlotFormProps) {
-  const [formData, setFormData] = useState<Partial<RoutineSlot>>(
-    initialData || {
+  const [formData, setFormData] = useState<FormData>(
+    initialData ? {
+      ...initialData,
+      startTime: initialData.startTime || '',
+      endTime: initialData.endTime || ''
+    } : {
       day: '',
       startTime: '',
       endTime: '',
@@ -34,10 +46,104 @@ export default function RoutineSlotForm({
   );
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [availableRooms, setAvailableRooms] = useState<Room[]>([]);
+  const [availableTeachers, setAvailableTeachers] = useState<Teacher[]>([]);
 
+  // Update available rooms and teachers when department changes
   useEffect(() => {
     setError(null);
-  }, [formData]);
+    if (formData.department) {
+      setAvailableRooms(getRoomsForDepartment(formData.department));
+      setAvailableTeachers(getTeachersForDepartment(formData.department));
+    }
+  }, [formData.department]);
+
+  // Check for conflicts and update room/teacher selection
+  useEffect(() => {
+    if (formData.day && formData.startTime) {
+      // Clear room if it's occupied
+      const isRoomOccupied = formData.roomNo && existingSlots.some(
+        slot =>
+          slot.roomNo === formData.roomNo &&
+          slot.day === formData.day &&
+          slot.startTime === formData.startTime &&
+          (!initialData?.id || slot.id !== initialData.id)
+      );
+      if (isRoomOccupied) {
+        setFormData(prev => ({ ...prev, roomNo: '' }));
+      }
+
+      // Clear teacher if they have another class
+      const isTeacherOccupied = formData.teacherId && existingSlots.some(
+        slot =>
+          slot.teacherId === formData.teacherId &&
+          slot.day === formData.day &&
+          slot.startTime === formData.startTime &&
+          (!initialData?.id || slot.id !== initialData.id)
+      );
+      if (isTeacherOccupied) {
+        setFormData(prev => ({ ...prev, teacherId: '' }));
+      }
+    }
+  }, [formData.day, formData.startTime, existingSlots, initialData?.id]);
+
+  const [roomConflicts, setRoomConflicts] = useState<RoutineSlot[]>([]);
+  const [teacherConflicts, setTeacherConflicts] = useState<RoutineSlot[]>([]);
+
+  // Update conflicts when day/time/room/teacher changes
+  useEffect(() => {
+    const updateConflicts = async () => {
+      if (formData.day && formData.startTime) {
+        try {
+          const slots = await findConflictingSlots(
+            formData.day,
+            formData.startTime,
+            formData.roomNo || undefined,
+            formData.teacherId || undefined,
+            initialData?.id
+          );
+          
+          setRoomConflicts(slots.filter(slot => slot.roomNo === formData.roomNo));
+          setTeacherConflicts(slots.filter(slot => slot.teacherId === formData.teacherId));
+        } catch (error) {
+          console.error('Error checking conflicts:', error);
+          setRoomConflicts([]);
+          setTeacherConflicts([]);
+        }
+      } else {
+        setRoomConflicts([]);
+        setTeacherConflicts([]);
+      }
+    };
+    
+    updateConflicts();
+  }, [formData.day, formData.startTime, formData.roomNo, formData.teacherId, initialData?.id]);
+
+  const isRoomOccupied = (room: Room): boolean => {
+    return roomConflicts.some(slot => slot.roomNo === room.number);
+  };
+
+  const getRoomOccupiedInfo = (room: Room): string => {
+    const occupyingSlots = roomConflicts.filter(slot => slot.roomNo === room.number);
+    if (occupyingSlots.length === 0) return '';
+    
+    return ' - Already used in: ' + occupyingSlots.map(slot =>
+      `${slot.day} at ${slot.startTime} (${slot.department} Sem ${slot.semester})`
+    ).join(', ');
+  };
+
+  const isTeacherOccupied = (teacher: Teacher): boolean => {
+    return teacherConflicts.some(slot => slot.teacherId === teacher.id);
+  };
+
+  const getTeacherOccupiedInfo = (teacher: Teacher): string => {
+    const occupyingSlots = teacherConflicts.filter(slot => slot.teacherId === teacher.id);
+    if (occupyingSlots.length === 0) return '';
+    
+    return ' - Already teaching: ' + occupyingSlots.map(slot =>
+      `${slot.day} at ${slot.startTime} (${slot.department} Sem ${slot.semester})`
+    ).join(', ');
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,15 +170,6 @@ export default function RoutineSlotForm({
       setIsSubmitting(false);
     }
   };
-
-  const timeSlots = [
-    '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
-    '2:00 PM', '3:00 PM', '4:00 PM'
-  ];
-
-  const weekDays = [
-    'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'
-  ];
 
   const inputClassName = "mt-1 block w-full rounded-md border border-gray-600 p-2 bg-gray-700 text-white focus:border-blue-400 focus:ring-1 focus:ring-blue-400";
   const labelClassName = "block text-sm font-medium text-gray-200";
@@ -117,16 +214,23 @@ export default function RoutineSlotForm({
         </div>
 
         <div>
-          <label className={labelClassName}>Start Time</label>
+          <label className={labelClassName}>Time Slot</label>
           <select
             value={formData.startTime}
-            onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+            onChange={(e) => {
+              const selectedSlot = timeSlots.find(slot => slot.start === e.target.value);
+              setFormData({
+                ...formData,
+                startTime: selectedSlot?.start || '',
+                endTime: selectedSlot?.end || ''
+              });
+            }}
             className={inputClassName}
             required
           >
             <option value="">Select Time</option>
-            {timeSlots.map(time => (
-              <option key={time} value={time}>{time}</option>
+            {timeSlots.map(slot => (
+              <option key={slot.start} value={slot.start}>{slot.display}</option>
             ))}
           </select>
         </div>
@@ -155,27 +259,56 @@ export default function RoutineSlotForm({
         </div>
 
         <div>
-          <label className={labelClassName}>Room No</label>
-          <input
-            type="text"
+          <label className={labelClassName}>Room</label>
+          <select
             value={formData.roomNo}
             onChange={(e) => setFormData({ ...formData, roomNo: e.target.value })}
             className={inputClassName}
             required
-            placeholder="e.g., 301"
-          />
+            disabled={!formData.department}
+          >
+            <option value="">Select Room</option>
+            {availableRooms.map(room => (
+              <option
+                key={room.number}
+                value={room.number}
+                disabled={isRoomOccupied(room)}
+                className={isRoomOccupied(room) ? 'bg-red-900/30 text-gray-500 cursor-not-allowed' : undefined}
+                style={isRoomOccupied(room) ? { display: 'none' } : undefined}
+              >
+                {room.name || room.number}
+                {room.type === 'lab' ? ' (Lab)' :
+                 room.type === 'seminar' ? ' (Seminar Hall)' :
+                 room.type === 'gallery' ? ' (Gallery)' : ''}
+                {isRoomOccupied(room) ? getRoomOccupiedInfo(room) : ''}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>
-          <label className={labelClassName}>Teacher ID</label>
-          <input
-            type="text"
+          <label className={labelClassName}>Teacher</label>
+          <select
             value={formData.teacherId}
             onChange={(e) => setFormData({ ...formData, teacherId: e.target.value })}
             className={inputClassName}
             required
-            placeholder="e.g., TCH001"
-          />
+            disabled={!formData.department}
+          >
+            <option value="">Select Teacher</option>
+            {availableTeachers.map(teacher => (
+              <option
+                key={teacher.id}
+                value={teacher.id}
+                disabled={isTeacherOccupied(teacher)}
+                className={isTeacherOccupied(teacher) ? 'bg-red-900/30 text-gray-500 cursor-not-allowed' : undefined}
+                style={isTeacherOccupied(teacher) ? { display: 'none' } : undefined}
+              >
+                {teacher.id} ({teacher.name})
+                {isTeacherOccupied(teacher) ? getTeacherOccupiedInfo(teacher) : ''}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 

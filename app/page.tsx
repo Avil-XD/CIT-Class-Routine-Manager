@@ -7,6 +7,7 @@ import RoutineSlotForm from './components/RoutineSlotForm';
 import { RoutineSlot, WeeklyRoutine, Subject } from './types';
 import { loadData, saveRoutine, deleteRoutineSlot } from './utils/storage';
 import { getSubjectsForSemester } from './constants/subjects';
+import { exportRoutineToPdf } from './utils/pdfExport';
 
 export default function Home() {
   const [selectedDepartment, setSelectedDepartment] = useState('');
@@ -48,14 +49,12 @@ export default function Home() {
       let updatedSlots: RoutineSlot[];
       
       if (selectedSlot) {
-        // Update existing slot
         updatedSlots = routineSlots.map(slot =>
           slot.id === selectedSlot.id
             ? { ...slot, ...slotData } as RoutineSlot
             : slot
         );
       } else {
-        // Add new slot
         const newSlot = {
           ...slotData,
           id: Date.now().toString(),
@@ -92,6 +91,14 @@ export default function Home() {
     }
   };
 
+  const handleExport = () => {
+    if (!selectedDepartment) {
+      alert('Please select a department and semester first.');
+      return;
+    }
+    exportRoutineToPdf(routineSlots, selectedDepartment, selectedSemester);
+  };
+
   return (
     <main className="min-h-screen bg-gray-900">
       <Header
@@ -108,16 +115,25 @@ export default function Home() {
               ? `${selectedDepartment} - Semester ${selectedSemester} Routine`
               : 'Select Department and Semester'}
           </h2>
-          <button
-            onClick={() => {
-              setSelectedSlot(undefined);
-              setIsFormOpen(true);
-            }}
-            className="px-4 py-2 bg-blue-700 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
-            disabled={!selectedDepartment}
-          >
-            Add New Slot
-          </button>
+          <div className="space-x-4">
+            <button
+              onClick={handleExport}
+              className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-600 disabled:opacity-50"
+              disabled={!selectedDepartment || routineSlots.length === 0}
+            >
+              Export PDF
+            </button>
+            <button
+              onClick={() => {
+                setSelectedSlot(undefined);
+                setIsFormOpen(true);
+              }}
+              className="px-4 py-2 bg-blue-700 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
+              disabled={!selectedDepartment}
+            >
+              Add New Slot
+            </button>
+          </div>
         </div>
 
         {isLoading ? (
@@ -143,7 +159,14 @@ export default function Home() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
             <div className="bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <RoutineSlotForm
-                initialData={selectedSlot}
+                initialData={selectedSlot ? {
+                  ...selectedSlot,
+                  department: selectedDepartment,
+                  semester: selectedSemester
+                } : {
+                  department: selectedDepartment,
+                  semester: selectedSemester
+                }}
                 existingSlots={routineSlots}
                 availableSubjects={availableSubjects}
                 onSubmit={handleSlotSubmit}
@@ -152,6 +175,21 @@ export default function Home() {
                   setSelectedSlot(undefined);
                 }}
               />
+            </div>
+          </div>
+        )}
+
+        {routineSlots.length > 0 && (
+          <div className="mt-4 text-gray-300 text-sm">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center">
+                <div className="w-3 h-3 rounded-full bg-blue-900/30 mr-2"></div>
+                <span>Theory Class</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 rounded-full bg-green-900/30 mr-2"></div>
+                <span>Lab Session</span>
+              </div>
             </div>
           </div>
         )}

@@ -7,7 +7,7 @@ interface HeaderProps {
   onSemesterChange: (semester: number) => void;
 }
 
-const departments = ['CSE', 'ECE', 'CE'];
+const departments = ['CSE', 'ECE', 'CE', 'IE', 'IT'];
 const semesters = [1, 2, 3, 4, 5, 6, 7, 8];
 
 export default function Header({

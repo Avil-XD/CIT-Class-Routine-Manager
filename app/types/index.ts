@@ -5,11 +5,29 @@ export interface Subject {
   elective?: string;
 }
 
+export interface Room {
+  number: string;
+  name?: string;
+  type?: 'classroom' | 'lab' | 'seminar' | 'gallery';
+}
+
+export interface Teacher {
+  id: string;
+  name: string;
+  department: string;
+}
+
+export interface TimeSlot {
+  start: string;
+  end: string;
+  display: string;
+}
+
 export interface RoutineSlot {
   id: string;
   day: string;
   startTime: string;
-  endTime?: string;
+  endTime: string;
   subjectId: string;
   teacherId: string;
   roomNo: string;

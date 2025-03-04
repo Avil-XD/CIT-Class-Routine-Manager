@@ -1,7 +1,8 @@
 'use client';
 
-import { RoutineSlot } from '../types';
+import { RoutineSlot, TimeSlot } from '../types';
 import { getSubjectName } from '../constants/subjects';
+import { timeSlots, weekDays } from '../constants/timeSlots';
 
 interface RoutineGridProps {
   slots: RoutineSlot[];
@@ -9,19 +10,20 @@ interface RoutineGridProps {
   onDeleteSlot?: (slot: RoutineSlot) => void;
 }
 
-const timeSlots = [
-  '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
-  '2:00 PM', '3:00 PM', '4:00 PM'
-];
-
-const weekDays = [
-  'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'
-];
+const isLabSubject = (subjectId: string): boolean => {
+  // Check if the subject code ends with numbers 71-79 (lab subjects)
+  const match = subjectId.match(/\d+$/);
+  if (match) {
+    const number = parseInt(match[0]);
+    return number >= 71 && number <= 79;
+  }
+  return false;
+};
 
 export default function RoutineGrid({ slots, onSlotClick, onDeleteSlot }: RoutineGridProps) {
-  const getSlotForTimeAndDay = (time: string, day: string) => {
-    return slots.find(slot => 
-      slot.startTime === time && slot.day === day
+  const getSlotForTimeAndDay = (timeSlot: TimeSlot, day: string) => {
+    return slots.find(slot =>
+      slot.startTime === timeSlot.start && slot.day === day
     );
   };
 
@@ -41,19 +43,22 @@ export default function RoutineGrid({ slots, onSlotClick, onDeleteSlot }: Routin
           </tr>
         </thead>
         <tbody>
-          {timeSlots.map(time => (
-            <tr key={time}>
+          {timeSlots.map(timeSlot => (
+            <tr key={timeSlot.start}>
               <td className="border border-gray-700 p-2 font-medium text-white bg-gray-800">
-                {time}
+                {timeSlot.display}
               </td>
               {weekDays.map(day => {
-                const slot = getSlotForTimeAndDay(time, day);
+                const slot = getSlotForTimeAndDay(timeSlot, day);
+                const isLab = slot ? isLabSubject(slot.subjectId) : false;
                 return (
-                  <td 
-                    key={`${day}-${time}`}
+                  <td
+                    key={`${day}-${timeSlot.start}`}
                     className={`border border-gray-700 p-2 ${
                       slot 
-                        ? 'bg-blue-900/30' 
+                        ? isLab 
+                          ? 'bg-green-900/30' 
+                          : 'bg-blue-900/30'
                         : 'bg-gray-800'
                     }`}
                   >

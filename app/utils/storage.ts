@@ -1,6 +1,6 @@
 'use client';
 
-import { WeeklyRoutine } from '../types';
+import { WeeklyRoutine, RoutineSlot } from '../types';
 
 interface StoredData {
   routines: WeeklyRoutine[];
@@ -44,6 +44,37 @@ export const saveRoutine = async (routine: WeeklyRoutine): Promise<void> => {
 
 export const loadData = async (): Promise<StoredData> => {
   return getInitialData();
+};
+
+export const getAllRoutineSlots = async (): Promise<RoutineSlot[]> => {
+  const data = getInitialData();
+  return data.routines.flatMap(routine => routine.slots);
+};
+
+export const findConflictingSlots = async (
+  day: string,
+  startTime: string,
+  roomNo?: string,
+  teacherId?: string,
+  excludeSlotId?: string
+): Promise<RoutineSlot[]> => {
+  const allSlots = await getAllRoutineSlots();
+  return allSlots.filter(slot => {
+    if (excludeSlotId && slot.id === excludeSlotId) {
+      return false;
+    }
+    
+    // Must match day and time slot
+    if (slot.day !== day || slot.startTime !== startTime) {
+      return false;
+    }
+
+    // Check for room or teacher conflicts
+    if (roomNo && slot.roomNo === roomNo) return true;
+    if (teacherId && slot.teacherId === teacherId) return true;
+    
+    return false;
+  });
 };
 
 export const deleteRoutineSlot = async (
