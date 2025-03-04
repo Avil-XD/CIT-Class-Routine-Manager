@@ -187,7 +187,5 @@ export const getSubjectName = (code: string): string => {
     ...Object.values(CSE_SUBJECTS).flat()
   ];
   const subject = allSubjects.find(s => s.code === code);
-  const electiveInfo = subject?.elective ? ` (${subject.elective === 'Open' ? 'Open Elective' : `Professional Elective-${subject.elective}`})` : '';
-  const compulsoryInfo = subject?.isCompulsory ? ' (Compulsory)' : '';
-  return subject ? `${subject.code} - ${subject.name}${compulsoryInfo}${electiveInfo}` : code;
+  return subject ? `${subject.code} - ${subject.name}` : code;
 };

@@ -208,11 +208,9 @@ export default function RoutineSlotForm({
               <option 
                 key={subject.code} 
                 value={subject.code}
-                className={subject.isCompulsory ? 'font-bold' : ''}
+                
               >
                 {subject.code} - {subject.name}
-                {subject.isCompulsory ? ' (Compulsory)' : ''}
-                {subject.elective ? ` (${subject.elective === 'Open' ? 'Open Elective' : `Professional Elective-${subject.elective}`})` : ''}
               </option>
             ))}
           </select>
