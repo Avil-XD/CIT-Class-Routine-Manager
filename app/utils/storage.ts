@@ -46,35 +46,49 @@ export const loadData = async (): Promise<StoredData> => {
   return getInitialData();
 };
 
+// Get all slots from all routines regardless of department/semester
 export const getAllRoutineSlots = async (): Promise<RoutineSlot[]> => {
   const data = getInitialData();
   return data.routines.flatMap(routine => routine.slots);
 };
 
+// Find any conflicts at a given time slot
 export const findConflictingSlots = async (
   day: string,
-  startTime: string,
-  roomNo?: string,
-  teacherId?: string,
-  excludeSlotId?: string
+  startTime: string
 ): Promise<RoutineSlot[]> => {
   const allSlots = await getAllRoutineSlots();
-  return allSlots.filter(slot => {
-    if (excludeSlotId && slot.id === excludeSlotId) {
-      return false;
-    }
-    
-    // Must match day and time slot
-    if (slot.day !== day || slot.startTime !== startTime) {
-      return false;
-    }
+  return allSlots.filter(slot => 
+    slot.day === day && slot.startTime === startTime
+  );
+};
 
-    // Check for room or teacher conflicts
-    if (roomNo && slot.roomNo === roomNo) return true;
-    if (teacherId && slot.teacherId === teacherId) return true;
-    
-    return false;
-  });
+// Check if a room is available at a given time
+export const isRoomAvailable = async (
+  roomNo: string,
+  day: string,
+  startTime: string,
+  excludeSlotId?: string
+): Promise<boolean> => {
+  const conflictingSlots = await findConflictingSlots(day, startTime);
+  return !conflictingSlots.some(slot => 
+    slot.roomNo === roomNo && 
+    (!excludeSlotId || slot.id !== excludeSlotId)
+  );
+};
+
+// Check if a teacher is available at a given time
+export const isTeacherAvailable = async (
+  teacherId: string,
+  day: string,
+  startTime: string,
+  excludeSlotId?: string
+): Promise<boolean> => {
+  const conflictingSlots = await findConflictingSlots(day, startTime);
+  return !conflictingSlots.some(slot => 
+    slot.teacherId === teacherId && 
+    (!excludeSlotId || slot.id !== excludeSlotId)
+  );
 };
 
 export const deleteRoutineSlot = async (
