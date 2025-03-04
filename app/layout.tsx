@@ -5,8 +5,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Class Routine Manager',
-  description: 'Engineering Institute Class Routine Management System',
+  title: 'CIT Class Routine Manager',
+  description: 'Central Institute of Technology (CIT), Kokrajhar Class Routine Management System',
 };
 
 export default function RootLayout({

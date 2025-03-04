@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CIT Class Routine Manager
 
-## Getting Started
+A modern web application for managing class routines at Central Institute of Technology (CIT), Kokrajhar.
 
-First, run the development server:
+## Features
+
+- Interactive class routine management
+- Support for all departments (CSE, ECE, CE, IE, IT)
+- Automatic conflict detection for:
+  - Room allocations
+  - Teacher schedules
+- Real-time availability checking
+- PDF export functionality
+- Shared resource management across departments
+
+## Technology Stack
+
+- Next.js 14
+- TypeScript
+- Tailwind CSS
+- Local Storage for data persistence
+
+## Usage
+
+### For Development
 
 ```bash
+git clone https://github.com/yourusername/CIT-Class-Routine-Manager.git
+cd CIT-Class-Routine-Manager
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### For Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+## Key Features
 
-To learn more about Next.js, take a look at the following resources:
+1. **Department Management**
+   - CSE, ECE, CE, IE, IT departments supported
+   - Semester-wise subject allocation
+   - Shared resource management
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. **Time Slot Management**
+   - 8 slots per day (8:30 AM to 5:30 PM)
+   - Lunch break handling
+   - Clear slot visualization
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. **Resource Management**
+   - Room availability tracking
+   - Teacher schedule management
+   - Cross-department conflict prevention
 
-## Deploy on Vercel
+4. **User Interface**
+   - Intuitive drag-and-drop interface
+   - Real-time conflict detection
+   - Clear availability indicators
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Contributing
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/)

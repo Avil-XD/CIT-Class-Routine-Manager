@@ -21,7 +21,7 @@ export default function Header({
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex flex-col sm:flex-row justify-between items-center">
           <h1 className="text-2xl font-bold text-white mb-4 sm:mb-0">
-            Class Routine Manager
+            CIT Class Routine Manager
           </h1>
           
           <div className="flex space-x-4">
